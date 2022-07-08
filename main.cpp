@@ -86,7 +86,7 @@ line find(unsigned char **data, int xpos, int ypos, int xoff, int yoff, int size
 		else if (tmp.length > current_longest.length){
 				current_longest = tmp;
 		}
-		else {
+		else if (data[ypos + i * yoff][xpos + i * xoff] != 0){
 			tmp.posx = xpos + i * xoff;
 			tmp.posy = ypos + i * yoff;
 			tmp.value = data[ypos + i * yoff][xpos + i * xoff];
@@ -196,6 +196,65 @@ line find_longest_nonzero_x(unsigned char **data, int size){
 
 
 
+// create the largest line from the current point
+line continue_line(unsigned char **data, int size, int xpos, int ypos, int xoff, int yoff){
+	line tmp;
+	tmp.value = data[ypos][xpos];
+	tmp.length = 0;
+	tmp.posx = xpos;
+	tmp.posy = ypos;
+	int i = 0;
+	while (in_bounds(xpos + i * xoff, size) && in_bounds(ypos + i * yoff, size)){
+		if (data[ypos + i * yoff][xpos + i * xoff] == tmp.value && tmp.value != 0){
+			tmp.length++;
+		}
+		i++;
+	}
+	return tmp;
+}
+
+
+
+// my previous algorithm
+line find_longest_line_bad(unsigned char **data, int size){
+	line longest, tmp;
+	// set longest line to zeros
+	longest = {0, 0, 0, 0, 0};
+
+	for (int i = 0; i < size; i++){
+		for (int ii = 0; ii < size; ii++){
+			// horizontal
+			tmp = continue_line(data, size, ii, i, 1, 0);
+			tmp.direction = 2;
+			if (tmp.length > longest.length){
+				longest = tmp;
+			}
+
+			// vertical
+			tmp = continue_line(data, size, ii, i, 0, 1);
+			tmp.direction = 0;
+			if (tmp.length > longest.length){
+				longest = tmp;
+			}
+
+			// diagonal leftbottom to righttop
+			tmp = continue_line(data, size, ii, i, 1, -1);
+			tmp.direction = 1;
+			if (tmp.length > longest.length){
+				longest = tmp;
+			}
+
+			// diagonal lefttop to right bottom
+			tmp = continue_line(data, size, ii, i, 1, 1);
+			tmp.direction = 3;
+			if (tmp.length > longest.length){
+				longest = tmp;
+			}
+
+		}
+	}
+	return longest;
+}
 
 
 
@@ -206,32 +265,65 @@ line find_longest_nonzero_x(unsigned char **data, int size){
 
 // testing the algorithm in the main function
 int main(){
+	// initiate randomness
 	srand(time(NULL));
-	int size = 13107;
+	
+	int size = 1;
+	int testcount = 100;
 
-	// make a 2d array of size * size bytes, set all to zero
-	unsigned char **data = new unsigned char*[size];
-	for (int i = 0; i < size; i++){
-		data[i] = new unsigned char[size];
-		memset(data[i], 0, size);
+
+	
+	
+
+	// execute each test
+	for (int i = 0; i < testcount; i++){
+		// make a 2d array of size * size bytes, set all to zero
+		unsigned char **data = new unsigned char*[size];
+		for (int i = 0; i < size; i++){
+			data[i] = new unsigned char[size];
+		}
+
+
+		// set all to zero
+		for (int i = 0; i < size; i++){
+			memset(data[i], 0, size);
+		}
+		// place line
+		place_random_line(data, size, 1);
+
+		
+		clock_t start, end;
+		float time_1, time_2;
+		line x, y;
+		// test performance here
+		{
+
+			start = clock();
+			x = find_longest_nonzero_x(data, size);
+			end = clock();
+
+			time_1 = end - start;
+
+			start = clock();
+			y = find_longest_line_bad(data, size);
+			end = clock();
+			time_2 = end - start;
+		}
+		// output
+		std::cout << (int)x.value << ", " << x.posx << ", " << x.posy << ", " << x.length << ", " << x.direction << ", " << time_1 << "\n";
+		std::cout << (int)y.value << ", " << y.posx << ", " << y.posy << ", " << y.length << ", " << y.direction << ", "<< time_2 << std::endl;
+
+		// cleanup
+		for (int i = 0; i < size; i++){
+			delete[] data[i];
+		}
+		delete[] data;
+		// double size for next run
+		size *= 2;
+		
 	}
-
 	
-	// place line
-	place_random_line(data, size, 1);
-
-
 	
-	//output2d(data, size);
-
-	// test performance here
-
-	line x = find_longest_nonzero_x(data, size);
-
-
-
-
-	std::cout << x.direction << ", " << x.length << ", " << x.posx << ", " << x.posy << "\n";
 }
 
 
