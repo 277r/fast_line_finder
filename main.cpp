@@ -23,7 +23,8 @@ int place_random_line(unsigned char **data, int bounds, int value){
 	for (int i = 0; in_bounds(a + i * diry, bounds) && in_bounds(b + i * dirx, bounds) && i < length; i++){
 		data[a + i * diry][b + i * dirx] = value;
 	}
-	data[a][b] = value;
+
+	return length;
 }
 
 
@@ -183,7 +184,7 @@ line find_longest_vertical(unsigned char **data, int size){
 line find_longest_nonzero_x(unsigned char **data, int size){
 	// threadify, level 1
 	line lines[6];
-	
+
 	lines[0] = find_longest_top(data, size);
 	lines[1] = find_longest_right(data, size);
 	lines[2] = find_longest_bottom(data, size);
@@ -278,9 +279,9 @@ int main(){
 	// execute each test
 	for (int i = 0; i < testcount; i++){
 		// make a 2d array of size * size bytes, set all to zero
-		unsigned char **data = new unsigned char*[size];
+		unsigned char **data = (unsigned char**) malloc(size * sizeof(unsigned char*));
 		for (int i = 0; i < size; i++){
-			data[i] = new unsigned char[size];
+			data[i] = (unsigned char*) malloc(size * sizeof(unsigned char));
 		}
 
 
@@ -291,7 +292,7 @@ int main(){
 		// place line
 		place_random_line(data, size, 1);
 
-		
+
 		clock_t start, end;
 		float time_1, time_2;
 		line x, y;
@@ -315,9 +316,9 @@ int main(){
 
 		// cleanup
 		for (int i = 0; i < size; i++){
-			delete[] data[i];
+			free(data[i]);
 		}
-		delete[] data;
+		free(data);
 		// double size for next run
 		size *= 2;
 		
